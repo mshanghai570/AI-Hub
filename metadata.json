@@ -1,0 +1,6 @@
+{
+  "name": "AI Hub - Personal Mac Desktop AI Launcher",
+  "description": "A native-feeling Mac desktop container and launcher for consumer AI chat services including ChatGPT, Claude, Gemini, Perplexity, and Grok with isolated sessions and quick keyboard shortcuts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

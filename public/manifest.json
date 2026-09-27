@@ -1,0 +1,17 @@
+{
+  "name": "AI Hub",
+  "short_name": "AI Hub",
+  "description": "Unified personal Mac desktop launcher for consumer AI chat services",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121214",
+  "theme_color": "#1A1A1D",
+  "icons": [
+    {
+      "src": "/src/assets/images/ai_hub_app_icon_1790529438612.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
