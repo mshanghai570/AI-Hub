@@ -1,70 +1,114 @@
-# AIHub 🤖
+AIHub 🤖
 
-**One app. Every AI.**
+One app. Multiple AI providers. Your AI, your way.
 
-AIHub is a native macOS/iOS AI client that brings multiple AI providers together in one clean, unified interface.
+AIHub is a multi-provider AI client built to bring different AI services together in one clean, native experience.
 
-Instead of jumping between different apps, websites, and terminals, AIHub gives you one place to chat with the models you actually use.
+Instead of bouncing between a pile of separate AI apps, AIHub gives you one place to connect your providers, choose the model you want, and chat with them from the same interface.
 
-## ✨ Features
+✨ What is AIHub?
 
-- 🤖 Multiple AI providers in one app
-- 💬 Unified chat interface
-- 🔄 Quickly switch between providers
-- 🔑 Provider authentication and account support
-- ⚙️ Custom provider configuration
-- 🧩 Designed to make adding new providers easy
-- 🖥️ Native macOS experience
-- 🚀 Built with Swift / SwiftUI
+AIHub is designed around one simple idea:
 
-## 🧠 Supported Providers
+Why use five different AI apps when you can put them all in one?
 
-Currently supported / being integrated:
+AIHub provides a unified interface for working with different AI providers while keeping the experience simple and familiar.
 
-- ChatGPT / OpenAI
-- Claude / Anthropic
-- Google Gemini
-- Shannon AI
-- Custom providers
+Switch providers when you want. Use different models for different jobs. Keep everything in one app.
 
-More providers are being added as development continues.
+🚀 Features
+🤖 Multi-provider AI
+Connect multiple AI providers from a single application
+Switch between providers without leaving your conversation workflow
+💬 Unified chat experience
+Talk to different AI services through the same interface
+No need to maintain a separate app for every provider
+🔐 Provider authentication
+Configure the credentials required by your providers
+Keep provider configuration centralized
+🧩 Extensible provider architecture
+Designed so additional AI providers can be integrated without rebuilding the entire application
+⚡ Native experience
+Built with Apple's development ecosystem in mind
+Designed to feel like an actual application rather than a web wrapper
+🧠 Shannon AI
 
-## 🎯 Why AIHub?
+AIHub is also being developed with Shannon AI support, allowing Shannon to become another part of the AIHub ecosystem.
 
-AI tools are everywhere now, but using them can mean keeping five different apps open at once.
+Shannon integration is an active area of development and may require additional authentication or configuration depending on the provider.
 
-AIHub's goal is simple:
+🛠️ Project Status
 
-> **Put the AI ecosystem in one place.**
+AIHub is actively being developed.
 
-Whether you're coding, researching, experimenting with models, or just having a conversation, AIHub gives you a single interface for all of it.
+The core multi-provider experience is working, while individual provider integrations are continuing to evolve.
 
-## 🚧 Status
+Some integrations may currently require additional authentication, configuration, or provider-specific setup.
 
-AIHub is currently under active development.
+Expect things to move quickly. 😅
 
-Some providers may require additional authentication or configuration, and the provider system is still being refined.
+🗺️ Roadmap
 
-Expect things to break. 😅
 
-## 🛠️ Built With
+Core AIHub application
 
-- Swift
-- SwiftUI
-- macOS
-- Native APIs
-- Provider APIs / authentication systems
 
-## 📸 Screenshots
 
-Coming soon.
+Multi-provider architecture
 
-## 📜 License
 
-See `LICENSE` for details.
 
----
+Provider configuration
 
-Made by **Michael** 😎
 
-**AIHub — one app. Every AI.**
+
+Unified chat interface
+
+
+
+Continue expanding provider support
+
+
+
+Improve authentication flows
+
+
+
+Refine provider/model management
+
+
+
+Improve conversation management
+
+
+
+Expand Shannon AI integration
+
+
+
+Additional customization and quality-of-life features
+
+💻 Development
+
+Clone the repository:
+
+git clone https://github.com/mshanghai570/AI-Hub.git
+cd AI-Hub
+
+Open the project in Xcode and build/run the application on your target Apple platform.
+
+Provider-specific functionality may require your own API credentials or account authentication.
+
+🤝 Contributing
+
+AIHub is primarily a personal project, but ideas, bug reports, and improvements are welcome.
+
+If you find something broken, have an idea for another provider, or want to improve the architecture, feel free to open an issue or pull request.
+
+📜 License
+
+See the repository for the current license information.
+
+Built because switching between AI apps is annoying. 😎
+
+AIHub — all your AI, one place.
