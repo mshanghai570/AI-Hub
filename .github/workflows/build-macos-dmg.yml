@@ -40,9 +40,14 @@ jobs:
 
       # The GitHub runner image does not ship XcodeGen, and the macOS app's
       # .xcodeproj is generated rather than committed, so this has to run
-      # before any build step. Pinned to a released version for reproducibility.
+      # before any build step. Installed via Homebrew (preinstalled on the
+      # runner image) and pinned to the same version macos/project.yml was
+      # authored against. The repo's own yonaskolb/XcodeGen action is not
+      # usable here — its release tags contain no action.yml.
       - name: Install XcodeGen
-        uses: yonaskolb/XcodeGen@2.46.0
+        run: |
+          brew install xcodegen
+          xcodegen --version
 
       - name: Select Xcode
         # Runner images change which Xcode versions ship, so this picks the
