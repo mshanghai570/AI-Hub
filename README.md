@@ -115,8 +115,8 @@ AIHub — all your AI, one place.
 
 ## Screenshots
 
+<img width="923" height="667" alt="Screenshot 2026-10-04 at 3 23 27 AM" src="https://github.com/user-attachments/assets/c45883a0-bd32-47d8-a4d2-8d5773e1862f" />
 <img width="919" height="660" alt="Screenshot 2026-10-04 at 3 23 37 AM" src="https://github.com/user-attachments/assets/80c6af95-731d-4d79-bb28-2a09a49bd2b0" />
 <img width="806" height="644" alt="Screenshot 2026-10-04 at 3 24 46 AM" src="https://github.com/user-attachments/assets/b69fdee8-5928-4a8c-84e6-16d742f74d75" />
 <img width="888" height="653" alt="Screenshot 2026-10-04 at 3 24 34 AM" src="https://github.com/user-attachments/assets/777a0c1b-f709-4062-80a7-f986012f529d" />
-<img width="923" height="667" alt="Screenshot 2026-10-04 at 3 23 27 AM" src="https://github.com/user-attachments/assets/c45883a0-bd32-47d8-a4d2-8d5773e1862f" />
 
