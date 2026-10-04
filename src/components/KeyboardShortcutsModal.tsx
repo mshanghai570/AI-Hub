@@ -13,16 +13,14 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   if (!isOpen) return null;
 
   const shortcuts = [
-    { key: '⌘ 1 - 5', desc: 'Switch between primary AI services (ChatGPT, Claude, Gemini, etc.)' },
+    { key: '⌘ 1 - 9', desc: 'Switch between AI services (web container mode)' },
     { key: '⌘ K', desc: 'Open Command Palette & Quick Switcher' },
-    { key: '⌘ N', desc: 'Add new AI service' },
+    { key: '⌘ N', desc: 'New chat / Add AI service' },
     { key: '⌘ D', desc: 'Toggle Dual Split View (side-by-side comparison)' },
     { key: '⌘ P', desc: 'Toggle Prompt Scratchpad drawer' },
-    { key: '⌘ B', desc: 'Collapse / Expand Sidebar' },
-    { key: '⌘ R', desc: 'Reload active service' },
-    { key: '⌘ O / ⌘ ↵', desc: 'Open active service in default browser' },
-    { key: '⌘ [', desc: 'Go back in history' },
-    { key: '⌘ ]', desc: 'Go forward in history' },
+    { key: '⌘ B', desc: 'Toggle Sidebar / History' },
+    { key: '⌘ R', desc: 'Reload active service frame' },
+    { key: '⌘ O', desc: 'Open active service in default browser' },
     { key: 'Esc', desc: 'Close modals / panels' },
     { key: '?', desc: 'Show this keyboard shortcuts guide' },
   ];

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Settings, ShieldCheck, Moon, Laptop, Palette, Terminal, KeyRound } from 'lucide-react';
+import { X, Settings, Moon, Terminal, KeyRound } from 'lucide-react';
 
 interface ChatSettingsModalProps {
   isOpen: boolean;
@@ -91,7 +91,7 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
               </button>
             </div>
             <p className="text-[11px] text-neutral-400">
-              Sessions for ChatGPT, Claude, Gemini, and Perplexity are partitioned and persistent.
+              Each service loads in its own sandboxed iframe, so ChatGPT, Claude, Gemini, and Perplexity sessions stay isolated and persistent.
             </p>
           </div>
 

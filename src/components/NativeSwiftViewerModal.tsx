@@ -4,13 +4,8 @@ import {
   Apple, 
   Copy, 
   Check, 
-  Code2, 
-  Terminal, 
   ShieldCheck, 
-  Download, 
-  Layers,
-  FileCode,
-  Sparkles
+  FileCode
 } from 'lucide-react';
 
 interface NativeSwiftViewerModalProps {

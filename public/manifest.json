@@ -8,9 +8,9 @@
   "theme_color": "#1A1A1D",
   "icons": [
     {
-      "src": "/src/assets/images/ai_hub_app_icon_1790529438612.jpg",
+      "src": "/ai-hub-icon.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

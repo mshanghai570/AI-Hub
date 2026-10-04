@@ -4,12 +4,7 @@ import {
   ArrowUp, 
   X, 
   FileCode, 
-  Image as ImageIcon, 
-  Globe, 
-  Terminal, 
-  Folder, 
   Plug, 
-  Sparkles,
   StopCircle
 } from 'lucide-react';
 import { Attachment, MCPConnector } from '../../types/chat';

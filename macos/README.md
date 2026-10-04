@@ -26,27 +26,61 @@ config.websiteDataStore = WKWebsiteDataStore(forIdentifier: service.storeUUID)
 In `ContentView.swift`:
 - Services are retained in memory within a `ZStack` so switching between ChatGPT and Claude is instantaneous and never loses ongoing chat drafts or stream states.
 
-### 3. Apple Human Interface Guidelines (HIG)
+### 3. Lazy WebView Mounting
+Services get a `WKWebView` the first time you visit them and stay mounted
+afterwards, so switching back is instant and in-page state survives. Creating
+one per service up front would load every provider's site at launch.
+
+### 4. Apple Human Interface Guidelines (HIG)
 - Native macOS `NavigationSplitView` with customizable sidebar width.
 - Native toolbar with SF Symbols (`chevron.left`, `chevron.right`, `arrow.clockwise`, `doc.text`, `safari`).
 - Native keyboard shortcuts (`⌘1`–`⌘5`, `⌘K`, `⌘N`, `⌘D`, `⌘P`, `⌘R`, `⌘O`).
 
 ---
 
-## Building & Running in Xcode
+## Building & Running
 
-1. Open **Xcode** on your Mac (Version 15 or 16).
-2. Choose **File > New > Project...**
-3. Select **macOS > App**.
-4. Set:
-   - Product Name: `AI Hub`
-   - Interface: `SwiftUI`
-   - Language: `Swift`
-5. Replace the generated files with:
-   - `AIHubApp.swift`
-   - `AIHubViewModel.swift`
-   - `WebViewContainer.swift`
-   - `ContentView.swift`
-6. In **Signing & Capabilities**:
-   - Check **Outgoing Connections (Client)** under App Sandbox so WebKit can reach `chatgpt.com`, `claude.ai`, `gemini.google.com`, etc.
-7. Press **⌘R** to build and run!
+The Xcode project is generated from `project.yml` by
+[XcodeGen](https://github.com/yonaskolb/XcodeGen), so the project file itself is
+gitignored and never hand-edited. Install the generator once:
+
+```sh
+brew install xcodegen
+```
+
+### Run in Xcode
+
+```sh
+xcodegen generate --spec macos/project.yml --project macos
+open macos/AIHub.xcodeproj
+```
+
+Then press **⌘R**. Change `project.yml` rather than the project file — your
+edits would be lost the next time the project is regenerated.
+
+### Build a .dmg
+
+```sh
+./macos/scripts/build-dmg.sh            # build and package
+./macos/scripts/build-dmg.sh --launch   # also smoke-test that it launches
+./macos/scripts/build-dmg.sh --no-build # repackage the existing .app
+```
+
+This produces `build/AIHub.dmg` (plus a `.sha256` checksum) as a universal
+binary covering both Intel and Apple Silicon. It is the same pipeline
+`.github/workflows/build-macos-dmg.yml` runs, so a green local run predicts a
+green CI run, and vice versa.
+
+### Unsigned builds
+
+`project.yml` signs ad-hoc (`CODE_SIGN_IDENTITY: "-"`), so there is no
+certificate to configure. macOS will still block the first launch of a
+downloaded DMG. Either right-click the app and choose **Open**, or:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/AIHub.app
+```
+
+To distribute it properly, set `CODE_SIGN_IDENTITY` to a **Developer ID**
+identity and `DEVELOPMENT_TEAM` to your team, then enable
+`ENABLE_HARDENED_RUNTIME` and notarize before release.

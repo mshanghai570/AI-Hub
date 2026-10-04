@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { usePersistentState } from './hooks/usePersistentState';
 import { AIService, ViewMode } from './types/service';
 import { INITIAL_SERVICES } from './constants/defaultServices';
 import { MacTitleBar } from './components/MacTitleBar';
@@ -15,119 +16,90 @@ import { NativeSwiftViewerModal } from './components/NativeSwiftViewerModal';
 import { MacConfirmDialog } from './components/MacConfirmDialog';
 
 // ChatGPT / Codex UI Components
-import { Conversation, ChatMessage, Attachment, MCPConnector } from './types/chat';
+import { ChatMessage, Attachment, MCPConnector } from './types/chat';
 import { DEFAULT_MCP_CONNECTORS } from './constants/mcpConnectors';
+import { STORAGE_KEYS } from './constants/storageKeys';
+import { newId } from './utils/ids';
+import { rawString, rawStringify, nonEmptyArray } from './hooks/usePersistentState';
+import { useConversations } from './hooks/useConversations';
 import { ChatGPTHeader } from './components/chat/ChatGPTHeader';
 import { ChatGPTSidebarDropdown } from './components/chat/ChatGPTSidebarDropdown';
 import { ChatGPTCanvas } from './components/chat/ChatGPTCanvas';
 import { MCPPluginsModal } from './components/chat/MCPPluginsModal';
 import { ChatSettingsModal } from './components/chat/ChatSettingsModal';
 
-const STORAGE_KEYS = {
-  SERVICES: 'ai_hub_services_v1',
-  ACTIVE_ID: 'ai_hub_active_service_id',
-  SPLIT_ID: 'ai_hub_split_service_id',
-  SIDEBAR_COLLAPSED: 'ai_hub_sidebar_collapsed',
-  SCRATCHPAD: 'ai_hub_scratchpad_draft',
-  VIEW_MODE: 'ai_hub_view_mode',
-  UI_MODE: 'ai_hub_ui_mode', // 'chatgpt' or 'web-container'
-  CONVERSATIONS: 'ai_hub_conversations_v1',
-  ACTIVE_CONV_ID: 'ai_hub_active_conversation_id',
-  CHAT_MODEL: 'ai_hub_chat_model',
-  MCP_CONNECTORS: 'ai_hub_mcp_connectors_v1',
-};
-
 export default function App() {
   // UI Mode: 'chatgpt' (ChatGPT/Codex UI) or 'web-container' (Multi-provider launcher)
-  const [uiMode, setUiMode] = useState<'chatgpt' | 'web-container'>(() => {
-    return (localStorage.getItem(STORAGE_KEYS.UI_MODE) as 'chatgpt' | 'web-container') || 'chatgpt';
-  });
+  const [uiMode, setUiMode] = usePersistentState<'chatgpt' | 'web-container'>(
+    STORAGE_KEYS.UI_MODE, 'chatgpt', {
+      parse: (raw) => (raw === 'chatgpt' || raw === 'web-container' ? raw : undefined),
+      stringify: rawStringify,
+    }
+  );
 
   // Services state with persistent storage
-  const [services, setServices] = useState<AIService[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.SERVICES);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-    return INITIAL_SERVICES;
-  });
+  const [services, setServices] = usePersistentState<AIService[]>(
+    STORAGE_KEYS.SERVICES, () => INITIAL_SERVICES, { parse: nonEmptyArray<AIService> }
+  );
 
   // Active service selection (for web container)
-  const [activeServiceId, setActiveServiceId] = useState<string>(() => {
-    return localStorage.getItem(STORAGE_KEYS.ACTIVE_ID) || 'chatgpt';
-  });
+  const [activeServiceId, setActiveServiceId] = usePersistentState<string>(
+    STORAGE_KEYS.ACTIVE_ID, 'chatgpt', { parse: rawString, stringify: rawStringify }
+  );
 
-  const [secondaryServiceId, setSecondaryServiceId] = useState<string>(() => {
-    return localStorage.getItem(STORAGE_KEYS.SPLIT_ID) || 'claude';
-  });
+  const [secondaryServiceId, setSecondaryServiceId] = usePersistentState<string>(
+    STORAGE_KEYS.SPLIT_ID, 'claude', { parse: rawString, stringify: rawStringify }
+  );
 
   // Web container view mode (single or split)
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    return (localStorage.getItem(STORAGE_KEYS.VIEW_MODE) as ViewMode) || 'single';
-  });
+  const [viewMode, setViewMode] = usePersistentState<ViewMode>(
+    STORAGE_KEYS.VIEW_MODE, 'single', {
+      parse: (raw) => (raw === 'single' || raw === 'split' ? raw : undefined),
+      stringify: rawStringify,
+    }
+  );
 
   // Web container sidebar collapsed state
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
-    return localStorage.getItem(STORAGE_KEYS.SIDEBAR_COLLAPSED) === 'true';
-  });
+  const [sidebarCollapsed, setSidebarCollapsed] = usePersistentState<boolean>(
+    STORAGE_KEYS.SIDEBAR_COLLAPSED, false
+  );
 
   // ChatGPT 3-line hamburger sidebar dropdown state
   const [isChatGPTDropdownOpen, setIsChatGPTDropdownOpen] = useState(false);
 
-  // ChatGPT Conversations
-  const [conversations, setConversations] = useState<Conversation[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.CONVERSATIONS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-
-    const initialConv: Conversation = {
-      id: `conv_${Date.now()}`,
-      title: 'Welcome to ChatGPT & Codex',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      model: 'chatgpt-4o',
-      messages: [],
-    };
-    return [initialConv];
-  });
-
-  // Active Conversation ID
-  const [activeConversationId, setActiveConversationId] = useState<string>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.ACTIVE_CONV_ID);
-    return saved || (conversations[0]?.id || `conv_${Date.now()}`);
-  });
-
   // Active Chat Model
-  const [chatModel, setChatModel] = useState<string>(() => {
-    return localStorage.getItem(STORAGE_KEYS.CHAT_MODEL) || 'chatgpt-4o';
-  });
+  const [chatModel, setChatModel] = usePersistentState<string>(
+    STORAGE_KEYS.CHAT_MODEL, 'chatgpt-4o', { parse: rawString, stringify: rawStringify }
+  );
+
+  // Conversation history + active conversation (state, persistence, lifecycle)
+  const {
+    conversations,
+    setConversations,
+    activeConversationId,
+    setActiveConversationId,
+    currentConversation,
+    handleNewChat,
+    handleDeleteConversation,
+    handleRenameConversation,
+    handleClearAllConversations,
+  } = useConversations(chatModel);
 
   // MCP Connectors & App Plugins
-  const [mcpConnectors, setMcpConnectors] = useState<MCPConnector[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.MCP_CONNECTORS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-    return DEFAULT_MCP_CONNECTORS;
-  });
+  const [mcpConnectors, setMcpConnectors] = usePersistentState<MCPConnector[]>(
+    STORAGE_KEYS.MCP_CONNECTORS, DEFAULT_MCP_CONNECTORS, { parse: nonEmptyArray<MCPConnector> }
+  );
 
   // Chat loading / generation state
   const [isLoadingChat, setIsLoadingChat] = useState(false);
 
+  // In-flight chat request, so "Stop" can actually abort it
+  const chatAbortRef = useRef<AbortController | null>(null);
+
   // Prompt Scratchpad content
-  const [scratchpadContent, setScratchpadContent] = useState<string>(() => {
-    return localStorage.getItem(STORAGE_KEYS.SCRATCHPAD) || '';
-  });
+  const [scratchpadContent, setScratchpadContent] = usePersistentState<string>(
+    STORAGE_KEYS.SCRATCHPAD, '', { parse: rawString, stringify: rawStringify }
+  );
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -146,111 +118,24 @@ export default function App() {
   // Reload trigger key per service
   const [reloadKeys, setReloadKeys] = useState<Record<string, number>>({});
 
-  // Sync states to localStorage
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.UI_MODE, uiMode);
-  }, [uiMode]);
+  // Services get a live iframe only once visited (and stay mounted after so
+  // their in-page state survives switching) — mounting all of them up front
+  // loads every provider's site at startup.
+  const [mountedServiceIds, setMountedServiceIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(services));
-  }, [services]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.ACTIVE_ID, activeServiceId);
+    setMountedServiceIds(prev => {
+      if (activeServiceId && prev.has(activeServiceId)) return prev;
+      const next = new Set(prev);
+      if (activeServiceId) next.add(activeServiceId);
+      return next;
+    });
   }, [activeServiceId]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SPLIT_ID, secondaryServiceId);
-  }, [secondaryServiceId]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SIDEBAR_COLLAPSED, String(sidebarCollapsed));
-  }, [sidebarCollapsed]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.VIEW_MODE, viewMode);
-  }, [viewMode]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SCRATCHPAD, scratchpadContent);
-  }, [scratchpadContent]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
-  }, [conversations]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.ACTIVE_CONV_ID, activeConversationId);
-  }, [activeConversationId]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CHAT_MODEL, chatModel);
-  }, [chatModel]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.MCP_CONNECTORS, JSON.stringify(mcpConnectors));
-  }, [mcpConnectors]);
-
-  // Current active conversation
-  const currentConversation = useMemo(() => {
-    return conversations.find(c => c.id === activeConversationId) || conversations[0] || {
-      id: `conv_${Date.now()}`,
-      title: 'New Chat',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      model: chatModel,
-      messages: [],
-    };
-  }, [conversations, activeConversationId, chatModel]);
 
   // Find active service object
   const activeService = useMemo(() => {
     return services.find(s => s.id === activeServiceId) || services[0] || INITIAL_SERVICES[0];
   }, [services, activeServiceId]);
-
-  // Handle New Chat
-  const handleNewChat = useCallback(() => {
-    const newConv: Conversation = {
-      id: `conv_${Date.now()}`,
-      title: 'New Chat',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      model: chatModel,
-      messages: [],
-    };
-    setConversations(prev => [newConv, ...prev]);
-    setActiveConversationId(newConv.id);
-  }, [chatModel]);
-
-  // Handle Delete Conversation
-  const handleDeleteConversation = useCallback((id: string) => {
-    setConversations(prev => {
-      const filtered = prev.filter(c => c.id !== id);
-      if (filtered.length === 0) {
-        const fresh: Conversation = {
-          id: `conv_${Date.now()}`,
-          title: 'New Chat',
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          model: chatModel,
-          messages: [],
-        };
-        return [fresh];
-      }
-      return filtered;
-    });
-    if (activeConversationId === id) {
-      const remaining = conversations.filter(c => c.id !== id);
-      if (remaining.length > 0) {
-        setActiveConversationId(remaining[0].id);
-      }
-    }
-  }, [activeConversationId, conversations, chatModel]);
-
-  // Handle Rename Conversation
-  const handleRenameConversation = useCallback((id: string, newTitle: string) => {
-    setConversations(prev => prev.map(c => c.id === id ? { ...c, title: newTitle } : c));
-  }, []);
 
   // Handle Toggle MCP Connector
   const handleToggleMCPConnector = useCallback((id: string) => {
@@ -271,7 +156,7 @@ export default function App() {
   // Handle Send Message (With Vision / Photo Attachments & MCP Plugins)
   const handleSendMessage = async (text: string, attachments: Attachment[]) => {
     const userMessage: ChatMessage = {
-      id: `msg_${Date.now()}`,
+      id: newId('msg'),
       role: 'user',
       content: text,
       timestamp: Date.now(),
@@ -298,6 +183,8 @@ export default function App() {
     }));
 
     setIsLoadingChat(true);
+    const controller = new AbortController();
+    chatAbortRef.current = controller;
 
     try {
       const activePlugins = mcpConnectors
@@ -307,6 +194,7 @@ export default function App() {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           messages: updatedMessages.map(m => ({
             role: m.role,
@@ -324,12 +212,16 @@ export default function App() {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || `Request failed (${response.status})`);
+      }
 
       const assistantMessage: ChatMessage = {
-        id: `msg_${Date.now() + 1}`,
+        id: newId('msg'),
         role: 'assistant',
-        content: data.content || data.fallback || "I've analyzed your prompt and files.",
+        content: data.content || "I've analyzed your prompt and files.",
         timestamp: Date.now(),
         model: chatModel,
         pluginsUsed: data.pluginsUsed || activePlugins,
@@ -346,10 +238,13 @@ export default function App() {
         return c;
       }));
     } catch (err: any) {
+      // User pressed Stop: don't append anything, the request was cancelled
+      if (err?.name === 'AbortError') return;
+
       const errorMessage: ChatMessage = {
-        id: `msg_err_${Date.now()}`,
+        id: newId('msg_err'),
         role: 'assistant',
-        content: `I received your request: "${text}". Note: If using advanced vision or live search, verify network or MCP tool settings.`,
+        content: `Request failed: ${err.message || 'unknown error'}`,
         timestamp: Date.now(),
         model: chatModel,
         error: err.message,
@@ -366,9 +261,19 @@ export default function App() {
         return c;
       }));
     } finally {
+      if (chatAbortRef.current === controller) {
+        chatAbortRef.current = null;
+      }
       setIsLoadingChat(false);
     }
   };
+
+  // Abort the in-flight request instead of just hiding the spinner
+  const handleStopGeneration = useCallback(() => {
+    chatAbortRef.current?.abort();
+    chatAbortRef.current = null;
+    setIsLoadingChat(false);
+  }, []);
 
   // Switch to specific web service in container mode
   const handleSwitchToService = (service: AIService) => {
@@ -396,7 +301,7 @@ export default function App() {
   const handleOpenDedicatedWindow = useCallback((service?: AIService) => {
     const target = service || activeService;
     const windowName = `ai_hub_window_${target.id}`;
-    const windowFeatures = 'width=1240,height=880,left=120,top=60,menubar=no,toolbar=no,location=no,status=no';
+    const windowFeatures = 'width=1240,height=880,left=120,top=60,menubar=no,toolbar=no,location=no,status=no,noopener';
     window.open(target.url, windowName, windowFeatures);
   }, [activeService]);
 
@@ -425,6 +330,20 @@ export default function App() {
       const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName);
 
       if (e.metaKey || e.ctrlKey) {
+        // ⌘1-9: Switch service (web container mode, same order as the sidebar)
+        if (/^[1-9]$/.test(e.key)) {
+          const ordered = [
+            ...services.filter(s => s.isDefault),
+            ...services.filter(s => !s.isDefault),
+          ];
+          const target = ordered[Number(e.key) - 1];
+          if (target && uiMode === 'web-container') {
+            e.preventDefault();
+            setActiveServiceId(target.id);
+          }
+          return;
+        }
+
         // ⌘B: Toggle sidebar / hamburger dropdown
         if (e.key.toLowerCase() === 'b') {
           e.preventDefault();
@@ -467,6 +386,27 @@ export default function App() {
           setViewMode(prev => prev === 'single' ? 'split' : 'single');
           return;
         }
+
+        // ⌘R: Reload active service iframe (never a full page reload)
+        if (e.key.toLowerCase() === 'r') {
+          e.preventDefault();
+          handleReload();
+          return;
+        }
+
+        // ⌘O: Open active service in the default browser
+        if (e.key.toLowerCase() === 'o') {
+          e.preventDefault();
+          handleOpenInBrowser();
+          return;
+        }
+      }
+
+      // ?: Keyboard shortcuts guide (never while typing)
+      if (e.key === '?' && !isInput) {
+        e.preventDefault();
+        setIsShortcutsModalOpen(prev => !prev);
+        return;
       }
 
       if (e.key === 'Escape') {
@@ -486,7 +426,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [uiMode, handleNewChat]);
+  }, [uiMode, handleNewChat, services, handleReload, handleOpenInBrowser]);
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#212121] text-neutral-200 overflow-hidden font-sans select-none">
@@ -526,7 +466,7 @@ export default function App() {
             conversation={currentConversation}
             onSendMessage={handleSendMessage}
             isLoading={isLoadingChat}
-            onStopGeneration={() => setIsLoadingChat(false)}
+            onStopGeneration={handleStopGeneration}
             mcpConnectors={mcpConnectors}
             onToggleMCPConnector={handleToggleMCPConnector}
             currentModel={chatModel}
@@ -579,17 +519,19 @@ export default function App() {
               </div>
 
               {viewMode === 'single' ? (
-                services.map((service) => (
-                  <ServiceWebView
-                    key={service.id}
-                    service={service}
-                    isActive={service.id === activeServiceId}
-                    onOpenInBrowser={handleOpenInBrowser}
-                    onOpenDedicatedWindow={handleOpenDedicatedWindow}
-                    onOpenLoginModal={() => setIsLoginModalOpen(true)}
-                    reloadKey={reloadKeys[service.id] || 0}
-                  />
-                ))
+                services.map((service) =>
+                  mountedServiceIds.has(service.id) ? (
+                    <ServiceWebView
+                      key={service.id}
+                      service={service}
+                      isActive={service.id === activeServiceId}
+                      onOpenInBrowser={handleOpenInBrowser}
+                      onOpenDedicatedWindow={handleOpenDedicatedWindow}
+                      onOpenLoginModal={() => setIsLoginModalOpen(true)}
+                      reloadKey={reloadKeys[service.id] || 0}
+                    />
+                  ) : null
+                )
               ) : (
                 <SplitViewContainer
                   services={services}
@@ -628,18 +570,7 @@ export default function App() {
       <ChatSettingsModal
         isOpen={isChatSettingsOpen}
         onClose={() => setIsChatSettingsOpen(false)}
-        onClearAllChats={() => {
-          const freshConv: Conversation = {
-            id: `conv_${Date.now()}`,
-            title: 'New Chat',
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            model: chatModel,
-            messages: [],
-          };
-          setConversations([freshConv]);
-          setActiveConversationId(freshConv.id);
-        }}
+        onClearAllChats={handleClearAllConversations}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
       />
 

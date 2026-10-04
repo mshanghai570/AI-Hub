@@ -2,6 +2,8 @@ node_modules/
 build/
 dist/
 coverage/
+server.js
+*.tsbuildinfo
 .DS_Store
 *.log
 .env*

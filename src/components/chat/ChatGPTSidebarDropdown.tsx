@@ -5,15 +5,10 @@ import {
   MessageSquare, 
   Search, 
   Trash2, 
-  Pin, 
   Settings, 
   Plug, 
-  Layers, 
-  ShieldCheck, 
-  ExternalLink,
   Edit2,
-  Check,
-  Laptop
+  Check
 } from 'lucide-react';
 import { Conversation } from '../../types/chat';
 import { AIService } from '../../types/service';

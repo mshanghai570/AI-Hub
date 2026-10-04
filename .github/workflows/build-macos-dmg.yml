@@ -1,0 +1,143 @@
+name: Build macOS DMG
+
+# Builds AI Hub.app for macOS and packages it as a .dmg, then attaches it to a
+# GitHub Release. This is the same pipeline as macos/scripts/build-dmg.sh, so a
+# green local run of that script predicts a green run here.
+#
+# The build is unsigned: CODE_SIGN_IDENTITY is "-" (ad-hoc) in project.yml, so
+# there is no certificate to configure and nothing to keep secret. A user who
+# downloads the DMG has to clear Gatekeeper once (right-click > Open, or
+# xattr -dr com.apple.quarantine) — see the Release notes below.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'macos/**'
+      - '.github/workflows/build-macos-dmg.yml'
+  pull_request:
+    paths:
+      - 'macos/**'
+      - '.github/workflows/build-macos-dmg.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-macos-dmg-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # macos-15 is Apple Silicon; ARCHS is pinned to both slices in the build
+    # script so the DMG runs natively on Intel and Apple Silicon alike.
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        # Runner images change which Xcode versions ship, so this picks the
+        # newest installed rather than naming one that may not be there. The
+        # app's deployment target is macOS 14.0, so any recent Xcode builds it.
+        run: |
+          LATEST="$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
+          echo "Using $LATEST"
+          sudo xcode-select -s "$LATEST"
+          xcodebuild -version
+
+      - name: Show build environment
+        run: |
+          xcodebuild -version
+          xcodegen --version
+          sw_vers
+
+      - name: Build and package DMG
+        run: ./macos/scripts/build-dmg.sh
+
+      - name: Verify the DMG contents
+        run: |
+          set -euo pipefail
+          DMG=build/AIHub.dmg
+          test -f "$DMG" || { echo "DMG missing"; exit 1; }
+
+          # Mount read-only and nofileowner so the listing reflects the real
+          # archived contents rather than anything the build left behind.
+          MOUNT="$(mktemp -d)"
+          hdiutil attach "$DMG" -mountpoint "$MOUNT" -readonly -nobrowse
+
+          echo "--- DMG contents ---"
+          ls -la "$MOUNT"
+          test -d "$MOUNT/AIHub.app" || { echo "AIHub.app missing from DMG"; exit 1; }
+          # The drag-to-install affordance depends on this symlink.
+          test -L "$MOUNT/Applications" || { echo "Applications symlink missing"; exit 1; }
+
+          echo "--- bundle metadata ---"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$MOUNT/AIHub.app/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$MOUNT/AIHub.app/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$MOUNT/AIHub.app/Contents/Info.plist"
+
+          # A DMG that mounts but will not launch is the classic packaging
+          # failure, and it only shows up after the user has already dragged
+          # the app to Applications.
+          echo "--- signature ---"
+          codesign -dv "$MOUNT/AIHub.app" 2>&1 | head -5
+          codesign --verify --deep --strict "$MOUNT/AIHub.app"
+          spctl --assess --type execute "$MOUNT/AIHub.app" 2>&1 || \
+            echo "note: spctl rejects an unsigned build, which is expected"
+
+          hdiutil detach "$MOUNT"
+          rmdir "$MOUNT"
+
+          echo "--- checksum ---"
+          cat "$DMG.sha256"
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIHub-macos-dmg
+          path: |
+            build/AIHub.dmg
+            build/AIHub.dmg.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish to Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="v$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' \
+                 build/macos-derived/Build/Products/Release/AIHub.app/Contents/Info.plist)"
+
+          # gh release create fails if the tag exists, which happens whenever
+          # main is pushed twice at the same version.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" build/AIHub.dmg build/AIHub.dmg.sha256 --clobber
+            echo "Updated existing release $TAG"
+          else
+            gh release create "$TAG" \
+              --title "AI Hub $TAG" \
+              --notes "$(cat <<'NOTES'
+              Native macOS app that puts several AI chat providers behind one
+              launcher, each in its own isolated WebKit session.
+
+              **This build is unsigned.** macOS will block it on first launch.
+              After dragging AI Hub to Applications, either right-click the app
+              and choose **Open**, or run:
+
+              ```
+              xattr -dr com.apple.quarantine /Applications/AIHub.app
+              ```
+
+              Requires macOS 14 or later (`WKWebsiteDataStore(forIdentifier:)`,
+              which keeps each provider's login separate, is macOS 14+).
+              Universal binary: runs natively on both Intel and Apple Silicon.
+              NOTES
+              )" \
+              build/AIHub.dmg build/AIHub.dmg.sha256
+            echo "Created release $TAG"
+          fi

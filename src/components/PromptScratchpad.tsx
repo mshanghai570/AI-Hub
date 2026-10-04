@@ -3,10 +3,8 @@ import {
   X, 
   Copy, 
   Check, 
-  Trash2, 
   FileText, 
-  ArrowRight,
-  RotateCcw
+  ArrowRight
 } from 'lucide-react';
 import { AIService } from '../types/service';
 

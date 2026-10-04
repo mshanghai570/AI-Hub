@@ -3,18 +3,9 @@ import {
   ExternalLink, 
   RotateCw, 
   ShieldCheck, 
-  AppWindow, 
-  Check, 
-  Copy, 
-  Lock, 
-  Sparkles,
-  Info,
-  Layers,
   ArrowUpRight,
   LogIn,
-  KeyRound,
-  Eye,
-  LayoutGrid
+  Eye
 } from 'lucide-react';
 import { AIService } from '../types/service';
 import { ServiceIcon } from './ServiceIcon';
@@ -38,7 +29,6 @@ export const ServiceWebView: React.FC<ServiceWebViewProps> = ({
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeKey, setIframeKey] = useState(0);
-  const [copiedUrl, setCopiedUrl] = useState(false);
   const [viewModeState, setViewModeState] = useState<'frame' | 'portal'>('frame');
 
   useEffect(() => {
@@ -46,12 +36,6 @@ export const ServiceWebView: React.FC<ServiceWebViewProps> = ({
       setIframeKey(k => k + 1);
     }
   }, [reloadKey]);
-
-  const handleCopyUrl = () => {
-    navigator.clipboard.writeText(service.url);
-    setCopiedUrl(true);
-    setTimeout(() => setCopiedUrl(false), 1800);
-  };
 
   // Specific official login URLs
   const getLoginUrl = (srv: AIService): string => {

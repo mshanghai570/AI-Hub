@@ -2,12 +2,9 @@ import React, { useRef, useEffect } from 'react';
 import { 
   Bot, 
   Code2, 
-  Sparkles, 
   Image as ImageIcon, 
   Terminal, 
-  Plug, 
-  FileCode,
-  ArrowRight
+  Plug
 } from 'lucide-react';
 import { Conversation, Attachment, MCPConnector } from '../../types/chat';
 import { ChatMessageItem } from './ChatMessageItem';
@@ -33,16 +30,32 @@ export const ChatGPTCanvas: React.FC<ChatGPTCanvasProps> = ({
   currentModel,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Track whether the user is already at the bottom so we don't yank them
+  // away from scrolled-up history when a reply lands.
+  const nearBottomRef = useRef(true);
 
-  // Auto-scroll to bottom on new messages
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    nearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 160;
+  };
+
+  // Auto-scroll to bottom on new messages (only if already near the bottom)
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && nearBottomRef.current) {
       scrollRef.current.scrollTo({
         top: scrollRef.current.scrollHeight,
         behavior: 'smooth',
       });
     }
   }, [conversation.messages, isLoading]);
+
+  // Switching conversation always starts at the bottom
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+    nearBottomRef.current = true;
+  }, [conversation.id]);
 
   const isCodex = currentModel.toLowerCase().includes('codex');
 
@@ -60,9 +73,9 @@ export const ChatGPTCanvas: React.FC<ChatGPTCanvasProps> = ({
       icon: <Code2 className="w-4 h-4 text-cyan-400" />
     },
     {
-      title: 'Run MCP Tools (GitHub & Filesystem)',
-      desc: 'Query local files or GitHub repositories via Model Context Protocol',
-      prompt: 'Use the active MCP connectors to inspect the project structure and list key files:',
+      title: 'Ask With MCP Connectors',
+      desc: 'Reference your enabled (simulated) connectors in the prompt',
+      prompt: 'Using my active MCP connectors as context, list what project files you would inspect first:',
       icon: <Plug className="w-4 h-4 text-purple-400" />
     },
     {
@@ -78,6 +91,7 @@ export const ChatGPTCanvas: React.FC<ChatGPTCanvasProps> = ({
       {/* Scrollable Chat Area */}
       <div 
         ref={scrollRef}
+        onScroll={handleScroll}
         className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col"
       >
         {conversation.messages.length === 0 ? (
@@ -92,10 +106,10 @@ export const ChatGPTCanvas: React.FC<ChatGPTCanvasProps> = ({
             </div>
 
             <h2 className="text-2xl font-bold text-white tracking-tight">
-              {isCodex ? 'OpenAI Codex Workspace' : 'What can I help you with today?'}
+              {isCodex ? 'Coding Workspace' : 'What can I help you with today?'}
             </h2>
             <p className="text-xs text-neutral-400 mt-2 max-w-md leading-relaxed">
-              Drop photos, attach source files, or invoke Model Context Protocol (MCP) tools directly in this unified canvas.
+              Drop photos, attach source files, or reference your enabled (simulated) MCP connectors in this unified canvas.
             </p>
 
             {/* Quick Prompt Cards */}

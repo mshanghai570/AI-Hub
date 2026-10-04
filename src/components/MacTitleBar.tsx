@@ -13,7 +13,6 @@ import {
   Check, 
   Copy,
   Laptop,
-  Maximize2,
   Minimize2,
   X,
   Minus,
@@ -22,7 +21,6 @@ import {
   Apple
 } from 'lucide-react';
 import { AIService, ViewMode } from '../types/service';
-import { ServiceIcon } from './ServiceIcon';
 
 interface MacTitleBarProps {
   activeService: AIService;
@@ -142,7 +140,7 @@ export const MacTitleBar: React.FC<MacTitleBarProps> = ({
             type="button"
             onClick={onBack}
             disabled={!canGoBack}
-            title="Go Back (⌘[)"
+              title="Go Back"
             className={`p-1.5 rounded-md transition-colors ${
               canGoBack 
                 ? 'text-neutral-300 hover:text-white hover:bg-white/[0.08]' 
@@ -156,7 +154,7 @@ export const MacTitleBar: React.FC<MacTitleBarProps> = ({
             type="button"
             onClick={onForward}
             disabled={!canGoForward}
-            title="Go Forward (⌘])"
+              title="Go Forward"
             className={`p-1.5 rounded-md transition-colors ${
               canGoForward 
                 ? 'text-neutral-300 hover:text-white hover:bg-white/[0.08]' 

@@ -158,6 +158,7 @@ export const SplitViewContainer: React.FC<SplitViewContainerProps> = ({
             title={primaryService.name}
             className="w-full h-full border-0"
             sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads"
+            allow="clipboard-read; clipboard-write; microphone; camera; display-capture; autoplay; encrypted-media"
             referrerPolicy="no-referrer"
           />
         </div>
@@ -191,6 +192,7 @@ export const SplitViewContainer: React.FC<SplitViewContainerProps> = ({
             title={secondaryService.name}
             className="w-full h-full border-0"
             sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads"
+            allow="clipboard-read; clipboard-write; microphone; camera; display-capture; autoplay; encrypted-media"
             referrerPolicy="no-referrer"
           />
         </div>

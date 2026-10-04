@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, Sparkles, Globe, AlertCircle, Check } from 'lucide-react';
+import { X, Plus, Globe, AlertCircle, Check } from 'lucide-react';
 import { AIService } from '../types/service';
 import { POPULAR_PRESETS } from '../constants/defaultServices';
 import { ServiceIcon } from './ServiceIcon';

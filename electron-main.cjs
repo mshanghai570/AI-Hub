@@ -1,8 +1,20 @@
 // AI Hub - Native macOS Electron Wrapper
 // Run with: npx electron electron-main.cjs
 
-const { app, BrowserWindow, session, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, shell } = require('electron');
 const path = require('path');
+const fs = require('fs');
+
+// Only hand http(s) URLs to the OS browser; anything else (javascript:,
+// file:, data:) would be opened as a link by the default handler.
+const isSafeExternalUrl = (url) => {
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'https:' || protocol === 'http:';
+  } catch {
+    return false;
+  }
+};
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -17,28 +29,31 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      webviewTag: true, // Enables isolated <webview> tags with session partitions
+      webviewTag: false, // the app embeds services in sandboxed iframes
       allowRunningInsecureContent: false,
     },
   });
 
-  // Enable isolated cookie partitions for each service provider
-  const providers = ['chatgpt', 'claude', 'gemini', 'perplexity', 'grok'];
-  providers.forEach(provider => {
-    const ses = session.fromPartition(`persist:${provider}`);
-    // Keep cookies and storage indefinitely in macOS Application Support
-  });
-
-  // Load Vite dev server or built production files
+  // Load Vite dev server, falling back to the production build
   const devUrl = 'http://localhost:3000';
+  const distIndex = path.join(__dirname, 'dist', 'index.html');
   mainWindow.loadURL(devUrl).catch(() => {
-    // If dev server not running, load production dist
-    mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+    if (fs.existsSync(distIndex)) {
+      // vite.config.ts sets base: './', so dist/index.html resolves its
+      // assets relative to file:// correctly.
+      mainWindow.loadFile(distIndex).catch((err) => {
+        console.error('Failed to load production build:', err);
+      });
+    } else {
+      console.error('No dev server on ' + devUrl + ' and no dist/index.html. Run "npm run build" first.');
+    }
   });
 
   // Open external links in macOS default browser (Safari, Chrome, etc.)
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    if (isSafeExternalUrl(url)) {
+      shell.openExternal(url);
+    }
     return { action: 'deny' };
   });
 }

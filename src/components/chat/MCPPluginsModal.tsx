@@ -2,17 +2,8 @@ import React, { useState } from 'react';
 import { 
   X, 
   Plug, 
-  Check, 
   Plus, 
-  Terminal, 
-  Folder, 
-  Globe, 
-  Database, 
-  FileText, 
-  Sparkles,
-  ExternalLink,
-  ShieldCheck,
-  RotateCw
+  ShieldCheck
 } from 'lucide-react';
 import { MCPConnector } from '../../types/chat';
 
@@ -35,7 +26,6 @@ export const MCPPluginsModal: React.FC<MCPPluginsModalProps> = ({
   const [customName, setCustomName] = useState('');
   const [customTransport, setCustomTransport] = useState<'stdio' | 'sse'>('stdio');
   const [customCommand, setCustomCommand] = useState('');
-  const [testingId, setTestingId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -44,7 +34,7 @@ export const MCPPluginsModal: React.FC<MCPPluginsModalProps> = ({
     if (!customName.trim() || !customCommand.trim()) return;
 
     const newConnector: MCPConnector = {
-      id: `custom_mcp_${Date.now()}`,
+      id: `custom_mcp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       name: customName.trim(),
       description: 'Custom Model Context Protocol (MCP) server integration.',
       icon: 'terminal',
@@ -64,13 +54,6 @@ export const MCPPluginsModal: React.FC<MCPPluginsModalProps> = ({
     setShowAddCustom(false);
   };
 
-  const testConnection = (id: string) => {
-    setTestingId(id);
-    setTimeout(() => {
-      setTestingId(null);
-    }, 1200);
-  };
-
   return (
     <div 
       className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150"
@@ -88,13 +71,13 @@ export const MCPPluginsModal: React.FC<MCPPluginsModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-white">Model Context Protocol (MCP) & App Plugins</h2>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono">
-                  Claude & ChatGPT Compatible
+                <h2 className="text-sm font-semibold text-white">MCP Connectors & App Plugins</h2>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-mono border border-amber-500/25">
+                  Simulated
                 </span>
               </div>
               <p className="text-[11px] text-neutral-400">
-                Extend AI Hub with GitHub, Local Filesystem, Code Interpreter, and Custom MCP servers
+                Enabled connectors share their tool names with the model so it can suggest results — no external MCP servers are contacted.
               </p>
             </div>
           </div>
@@ -111,7 +94,7 @@ export const MCPPluginsModal: React.FC<MCPPluginsModalProps> = ({
         <div className="p-6 overflow-y-auto space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
-              Installed MCP Connectors ({connectors.length})
+              Connectors ({connectors.length}) · simulated
             </span>
             <button
               type="button"
@@ -196,7 +179,6 @@ export const MCPPluginsModal: React.FC<MCPPluginsModalProps> = ({
           {/* Connectors List */}
           <div className="space-y-2.5">
             {connectors.map((c) => {
-              const isTesting = testingId === c.id;
               const isEnabled = c.isConnected && c.isEnabledForChat;
 
               return (
@@ -218,6 +200,9 @@ export const MCPPluginsModal: React.FC<MCPPluginsModalProps> = ({
                     <div className="min-w-0 space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-xs text-white">{c.name}</span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/10 border border-amber-500/25 text-amber-300">
+                          simulated
+                        </span>
                         <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white/[0.08] text-neutral-300">
                           {c.transport}
                         </span>
@@ -234,15 +219,6 @@ export const MCPPluginsModal: React.FC<MCPPluginsModalProps> = ({
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => testConnection(c.id)}
-                      title="Test MCP handshake & tools"
-                      className="p-1.5 rounded-lg hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-colors"
-                    >
-                      <RotateCw className={`w-3.5 h-3.5 ${isTesting ? 'animate-spin text-purple-400' : ''}`} />
-                    </button>
-
                     <button
                       type="button"
                       onClick={() => onToggleConnector(c.id)}
@@ -263,7 +239,7 @@ export const MCPPluginsModal: React.FC<MCPPluginsModalProps> = ({
           <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[11px] text-neutral-400 flex items-start gap-2.5">
             <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
             <div>
-              <strong className="text-white">Model Context Protocol (Anthropic & OpenAI Standard):</strong> MCP allows AI Hub to safely connect external data sources and execution sandboxes without hardcoding API keys.
+              <strong className="text-white">Simulated connectors:</strong> AI Hub does not run an MCP client or contact external servers. Connector names and tool names are injected into the prompt so the model can mimic tool output; results are not real.
             </div>
           </div>
         </div>

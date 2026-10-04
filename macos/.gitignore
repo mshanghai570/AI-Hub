@@ -1,0 +1,6 @@
+# Generated from project.yml by XcodeGen — never commit or hand-edit.
+AIHub.xcodeproj/
+
+# XcodeGen user-specific scheme data.
+*xcuserdata/
+*.xcworkspace/xcuserdata/

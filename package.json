@@ -1,5 +1,5 @@
 {
-  "name": "react-example",
+  "name": "ai-hub",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -29,10 +29,10 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^7.0.2",
+    "electron": "^44.4.5",
     "@types/express": "^4.17.21"
   }
 }

@@ -35,7 +35,15 @@ struct AIServiceItem: Identifiable, Codable, Equatable, Hashable {
         case "perplexity": return "A1B2C3D4-0004-4000-8000-000000000004"
         case "grok": return "A1B2C3D4-0005-4000-8000-000000000005"
         default:
-            return "A1B2C3D4-0099-4000-8000-\(String(format: "%012x", abs(string.hashValue)))"
+            // FNV-1a 64-bit hash: stable across launches, unlike String.hashValue
+            // which is randomly seeded per process and would silently rotate the
+            // data store partition (dropping the session) on every app start.
+            var hash: UInt64 = 0xcbf29ce484222325
+            for byte in string.utf8 {
+                hash ^= UInt64(byte)
+                hash = hash &* 0x100000001b3
+            }
+            return "A1B2C3D4-0099-4000-8000-\(String(format: "%012llx", hash & 0x0000_FFFF_FFFF_FFFF))"
         }
     }
 }
@@ -46,8 +54,13 @@ final class AIHubViewModel: ObservableObject {
     @Published var selectedServiceId: String = "chatgpt" {
         didSet {
             UserDefaults.standard.set(selectedServiceId, forKey: "aihub_selected_service_id")
+            mountedServiceIds.insert(selectedServiceId)
         }
     }
+    // Services get a WKWebView only once visited (and stay mounted afterwards
+    // so their in-page state survives switching) — creating one per service up
+    // front loads every provider's site at launch.
+    @Published var mountedServiceIds: Set<String> = []
     @Published var secondaryServiceId: String = "claude"
     @Published var isSplitViewActive: Bool = false
     @Published var isShowingAddServiceSheet: Bool = false
@@ -67,6 +80,8 @@ final class AIHubViewModel: ObservableObject {
         if let savedId = UserDefaults.standard.string(forKey: "aihub_selected_service_id") {
             self.selectedServiceId = savedId
         }
+        // didSet observers don't fire during init, so register explicitly
+        self.mountedServiceIds.insert(self.selectedServiceId)
         if let savedScratchpad = UserDefaults.standard.string(forKey: "aihub_scratchpad") {
             self.scratchpadText = savedScratchpad
         }
@@ -82,12 +97,6 @@ final class AIHubViewModel: ObservableObject {
     
     func selectService(_ service: AIServiceItem) {
         selectedServiceId = service.id
-    }
-    
-    func selectServiceById(_ id: String) {
-        if services.contains(where: { $0.id == id }) {
-            selectedServiceId = id
-        }
     }
     
     func addService(name: String, urlString: String, colorHex: String, iconSymbol: String) {
@@ -143,7 +152,7 @@ final class AIHubViewModel: ObservableObject {
     
     private func loadServices() {
         if let data = UserDefaults.standard.data(forKey: "aihub_custom_services"),
-           let decoded = try? JSONDecoder().decode([AIServiceItem].self, data) {
+           let decoded = try? JSONDecoder().decode([AIServiceItem].self, from: data) {
             self.services = decoded
         } else {
             self.services = defaultServices

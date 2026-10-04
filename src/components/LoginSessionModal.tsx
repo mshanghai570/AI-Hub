@@ -3,11 +3,8 @@ import {
   X, 
   ShieldCheck, 
   KeyRound, 
-  ExternalLink, 
   Lock, 
   CheckCircle2, 
-  AlertCircle, 
-  Sparkles,
   Info,
   Cookie,
   Layers,
@@ -97,7 +94,7 @@ export const LoginSessionModal: React.FC<LoginSessionModalProps> = ({
                   Independent Cookies
                 </span>
                 <p className="text-[11px] text-neutral-400">
-                  ChatGPT, Claude, and Gemini sessions live in strictly partitioned cookie stores. None can inspect or access another.
+                  Each provider runs in its own sandboxed frame, and cookies are isolated by origin. One provider's session is never visible to another.
                 </p>
               </div>
 
@@ -107,7 +104,7 @@ export const LoginSessionModal: React.FC<LoginSessionModalProps> = ({
                   Zero Credentials Stored
                 </span>
                 <p className="text-[11px] text-neutral-400">
-                  AI Hub never stores, intercepts, or logs your passwords, tokens, or personal chat history.
+                  AI Hub collects no telemetry of its own. Logins happen directly with the provider's website, and your chat history stays in local storage. Chat prompts are sent to Google's Gemini API to generate replies.
                 </p>
               </div>
 
@@ -198,9 +195,9 @@ export const LoginSessionModal: React.FC<LoginSessionModalProps> = ({
               <span>How Web Browsers Handle Cross-Origin Iframes vs Native Mac App</span>
             </div>
             <p className="text-[11px] text-neutral-300 leading-relaxed">
-              Some consumer websites (like Google Accounts or ChatGPT login) deploy <code className="text-amber-300 font-mono">X-Frame-Options: DENY</code> to prevent third parties from phishing. 
-              In our web container preview, simply click <strong>"Open & Log In"</strong> to authenticate in a tab/window. Your login cookies are retained permanently.
-              In our native macOS app (via the included Swift or Electron builds), there are zero iframe restrictions!
+              Some consumer websites (like Google Accounts or ChatGPT login) deploy <code className="text-amber-300 font-mono">X-Frame-Options: DENY</code> to prevent third parties from phishing them in frames. 
+              In the web container and Electron builds, click <strong>"Open & Log In"</strong> to authenticate in a tab/window when a site refuses to load in a frame; cookies are retained afterwards.
+              The native SwiftUI build loads each site directly in its own WKWebView, so it has no framing restrictions.
             </p>
           </div>
         </div>
@@ -208,7 +205,7 @@ export const LoginSessionModal: React.FC<LoginSessionModalProps> = ({
         {/* Footer */}
         <div className="px-6 py-3.5 border-t border-white/[0.08] bg-[#141417] flex items-center justify-between">
           <span className="text-[11px] text-neutral-500">
-            AI Hub Personal Container · No Telemetry · Local Only
+            AI Hub Personal Container · No telemetry of its own · Chat prompts go to Google Gemini
           </span>
           <button
             type="button"

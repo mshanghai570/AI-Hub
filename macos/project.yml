@@ -1,0 +1,81 @@
+# AI Hub — macOS app target
+#
+# Source of truth for the Xcode project. `macos/AIHub.xcodeproj` is generated
+# from this file by XcodeGen, so the project file itself is gitignored and
+# never hand-edited — change this file, then re-run `./macos/scripts/build-dmg.sh`
+# (or `xcodegen generate --spec macos/project.yml --project macos`).
+#
+# Signing is ad-hoc ("-") rather than automatic: the DMG is distributed
+# unsigned, and ad-hoc signing is what lets it launch locally after Gatekeeper's
+# quarantine is cleared. Swap CODE_SIGN_IDENTITY to a Developer ID and add a
+# DEVELOPMENT_TEAM to ship it notarized.
+
+name: AIHub
+
+options:
+  bundleIdPrefix: com.aihub
+  createIntermediateGroups: true
+  deploymentTarget:
+    # WKWebsiteDataStore(forIdentifier:) — the per-provider session partition
+    # that keeps ChatGPT and Claude logins from bleeding into each other — is
+    # macOS 14+. WebViewContainer.swift has an #available fallback for older
+    # systems, but the partitioning is the whole point of the app, so the
+    # floor is 14.0 rather than pretending to support anything older.
+    macOS: "14.0"
+  generateEmptyDirectories: false
+
+settings:
+  base:
+    # Swift 5 language mode: the WebKit + SwiftUI glue uses @MainActor with
+    # ObservableObject, which trips a lot of strict-concurrency diagnostics
+    # under the Swift 6 toolchain. Matches the iOS target's setting.
+    SWIFT_VERSION: "5.0"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
+
+targets:
+  AIHub:
+    type: application
+    platform: macOS
+    sources:
+      - path: .
+        excludes:
+          - "AIHub.xcodeproj"
+          - "scripts"
+          - "project.yml"
+          - "README.md"
+          - ".gitignore"
+    settings:
+      base:
+        PRODUCT_NAME: AIHub
+        PRODUCT_BUNDLE_IDENTIFIER: com.aihub.app
+        INFOPLIST_FILE: Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        # Ad-hoc signature. Keeps the entitlements below embedded so the
+        # sandbox is actually enforced, without needing a Developer ID.
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        DEVELOPMENT_TEAM: ""
+        # Nothing in the app is third-party or JIT'd, so the hardened runtime
+        # buys nothing here and only complicates local launches.
+        ENABLE_HARDENED_RUNTIME: NO
+        # Xcode otherwise injects com.apple.security.get-task-allow into every
+        # ad-hoc signature, which lets a debugger attach to the shipped app.
+        # The entitlements file is the whole truth about what this app may do.
+        CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
+        CODE_SIGN_ENTITLEMENTS: AIHub.entitlements
+        COMBINE_HIDPI_IMAGES: YES
+
+schemes:
+  AIHub:
+    build:
+      targets:
+        AIHub: all
+    run:
+      config: Debug
+    archive:
+      config: Release

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { AIService } from '../types/service';
 import { ServiceIcon } from './ServiceIcon';
-import appIconImg from '../assets/images/ai_hub_app_icon_1790529438612.jpg';
+import appIconImg from '../assets/images/ai-hub-icon.png';
 
 interface MacSidebarProps {
   services: AIService[];

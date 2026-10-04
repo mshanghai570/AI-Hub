@@ -5,14 +5,11 @@ import {
   Terminal, 
   Copy, 
   Check, 
-  Download, 
   Apple, 
   ShieldCheck, 
-  ExternalLink,
-  Sparkles,
-  Layers
+  Sparkles
 } from 'lucide-react';
-import appIconImg from '../assets/images/ai_hub_app_icon_1790529438612.jpg';
+import appIconImg from '../assets/images/ai-hub-icon.png';
 
 interface DesktopExportModalProps {
   isOpen: boolean;
@@ -174,7 +171,7 @@ npx electron-builder --mac`;
           {activeTab === 'electron' && (
             <div className="space-y-4 text-xs">
               <p className="text-neutral-300 text-xs">
-                AI Hub already includes the complete <code className="text-cyan-300 font-mono">electron-main.cjs</code> entry point in the repository. Running it with Electron creates a true macOS desktop window with partitioned webviews:
+                AI Hub already includes the complete <code className="text-cyan-300 font-mono">electron-main.cjs</code> entry point in the repository. Running it with Electron creates a true macOS desktop window that loads the same sandboxed iframe UI as the browser build:
               </p>
 
               <div className="relative">
@@ -202,9 +199,9 @@ npx electron-builder --mac`;
 
               <div className="p-3 bg-white/[0.03] border border-white/[0.06] rounded-xl text-neutral-400 text-[11px] space-y-1">
                 <p className="font-semibold text-neutral-200">How Electron handles sessions:</p>
-                <p>• Uses <code className="text-cyan-400">partition: "persist:chatgpt"</code> and separate partitions per provider.</p>
-                <p>• Cookies and logins are stored permanently in macOS Application Support.</p>
-                <p>• Zero CSP or X-Frame-Options blocking.</p>
+                <p>• Services load in sandboxed iframes; cookies are isolated per origin, so providers can't read each other's sessions.</p>
+                <p>• Cookies and logins persist between launches in the app's browser profile.</p>
+                <p>• External links are opened in your default browser via a scheme-checked handler.</p>
               </div>
             </div>
           )}
@@ -230,7 +227,7 @@ npx electron-builder --mac`;
         <div className="px-6 py-3.5 border-t border-white/[0.08] bg-[#141416] flex items-center justify-between">
           <div className="flex items-center gap-2 text-[11px] text-neutral-400">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>100% private, no backend telemetry, local-first storage</span>
+            <span>Local-first storage — chat prompts are sent to Google's Gemini API to generate replies</span>
           </div>
           <button
             type="button"

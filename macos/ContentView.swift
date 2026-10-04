@@ -33,8 +33,9 @@ struct ContentView: View {
                             .frame(minWidth: 350)
                     }
                 } else {
-                    // Single View with persistent instances (ZStack keeps them in memory)
-                    ForEach(model.services) { service in
+                    // Single View with persistent instances (visited services stay
+                    // in memory; unvisited ones are never created or loaded)
+                    ForEach(model.services.filter { model.mountedServiceIds.contains($0.id) }) { service in
                         WebViewContainer(service: service)
                             .opacity(model.selectedServiceId == service.id ? 1 : 0)
                             .allowsHitTesting(model.selectedServiceId == service.id)
