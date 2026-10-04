@@ -38,6 +38,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The GitHub runner image does not ship XcodeGen, and the macOS app's
+      # .xcodeproj is generated rather than committed, so this has to run
+      # before any build step. Pinned to a released version for reproducibility.
+      - name: Install XcodeGen
+        uses: yonaskolb/XcodeGen@2.46.0
+
       - name: Select Xcode
         # Runner images change which Xcode versions ship, so this picks the
         # newest installed rather than naming one that may not be there. The
