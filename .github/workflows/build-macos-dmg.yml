@@ -132,23 +132,7 @@ jobs:
           else
             gh release create "$TAG" \
               --title "AI Hub $TAG" \
-              --notes "$(cat <<'NOTES'
-              Native macOS app that puts several AI chat providers behind one
-              launcher, each in its own isolated WebKit session.
-
-              **This build is unsigned.** macOS will block it on first launch.
-              After dragging AI Hub to Applications, either right-click the app
-              and choose **Open**, or run:
-
-              ```
-              xattr -dr com.apple.quarantine /Applications/AIHub.app
-              ```
-
-              Requires macOS 14 or later (`WKWebsiteDataStore(forIdentifier:)`,
-              which keeps each provider's login separate, is macOS 14+).
-              Universal binary: runs natively on both Intel and Apple Silicon.
-              NOTES
-              )" \
+              --notes-file .github/release-notes.md \
               build/AIHub.dmg build/AIHub.dmg.sha256
             echo "Created release $TAG"
           fi
